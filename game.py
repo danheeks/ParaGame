@@ -56,29 +56,31 @@ class Graph:
         return y
     
 class GameBody():
-    def __init__(self, pos):
-        pass
-
-class Wing():
-    def __init__(self):
+    def __init__(self, pos, v, poly_pts, image_centre):
         self.body = pymunk.Body()
-        self.body.position = Vec2d(0, 46)
-        self.body.velocity = Vec2d(-10, -0.1)
-        self.body.angle = 0.3
-        poly_pts = [(133, 224), (90, 217), (40, 158), (10, 12), (31, 3), (178, 40), (157, 143)]
+        self.body.position = pos
+        self.body.velocity = v
         self.pts2 = []
         for pt in poly_pts:
-            self.pts2.append(((pt[0] * image_scale - wing_centre.x)/pixel_scale, (wing_centre.y - pt[1] * image_scale)/pixel_scale))
+            self.pts2.append(((pt[0] * image_scale - image_centre.x)/pixel_scale, (image_centre.y - pt[1] * image_scale)/pixel_scale))
         self.shape = pymunk.Poly(self.body, self.pts2)
+        space.add(self.body, self.shape)
+
+class Wing(GameBody):
+    def __init__(self):
+        poly_pts = [(133, 224), (90, 217), (40, 158), (10, 12), (31, 3), (178, 40), (157, 143)]
+        GameBody.__init__(self, (0,46),(-8,-0.8), poly_pts, wing_centre)
+        self.body.angle = 0.3
         self.shape.mass = 4 # kg
         self.shape.friction = 0.7
-        space.add(self.body, self.shape)
         self.airflow = Vec2d(0,0)
         self.wing_angle = Vec2d(0,0)
         self.lift = Vec2d(0,0)
         self.drag = Vec2d(0,0)
-        self.lift_coefficients = Graph([(-20, 0), (-10, -0.5), (-8, -0.4), (-6, -0.2), (-4, 0), (-2, 0.2), (0, 0.42), (2, 0.66), (4, 0.82), (6, 1.1), (8, 1.2), (10, 1.4), (12, 1.45), (14, 1.52), (16, 1.5), (18, 1.45), (90, 0)])
-        self.drag_coefficients = Graph([(-10, 0.1), (0, 0.07), (8, 0.1), (12, 0.14), (15, 0.25), (18, 0.45)])
+        self.pressure_pos = 0
+        self.lift_coefficients = Graph([(-70, 0), (-30, -0.5), (-10, -0.5), (-8, -0.4), (-6, -0.2), (-4, 0), (-2, 0.2), (0, 0.42), (2, 0.66), (4, 0.82), (6, 1.1), (8, 1.2), (10, 1.4), (12, 1.45), (14, 1.52), (16, 1.5), (18, 1.45), (30, 1.4), (60, 0)])
+        self.drag_coefficients = Graph([(-30,0.3),(-10, 0.1), (0, 0.07), (8, 0.1), (12, 0.14), (15, 0.25), (18, 0.45)])
+        self.pressure_posns = Graph([(-10, 0), (0, 0.0)])
         self.angle_of_attack = None       
         self.angle_of_wing = None 
         
@@ -88,8 +90,12 @@ class Wing():
     def get_drag_coefficient(self, angle):
         return self.drag_coefficients.get_y_at_x(angle)
         
-    def draw_vector(self, v, colour = (0,0,0)):
-        pygame.draw.line(screen, colour, world_to_screen(self.body.position), world_to_screen(self.body.position + v * force_draw_factor))
+    def get_pressure_pos(self, angle):
+        return self.pressure_posns.get_y_at_x(angle)
+        
+    def draw_vector(self, pos, v, colour = (0,0,0)):
+        wpos = self.body.local_to_world(Vec2d(pos[0], pos[1]))
+        pygame.draw.line(screen, colour, world_to_screen(wpos), world_to_screen(wpos + v * force_draw_factor))
 
     def draw_shape(self):
         s = None
@@ -113,10 +119,10 @@ class Wing():
         
         if draw_forces:
             # draw lift and drag
-            self.draw_vector(self.lift, (0,0,255))
-            self.draw_vector(self.body.velocity)
-            self.draw_vector(self.drag, (255,0,0))
-            self.draw_vector(Vec2d(1,0).rotated(self.angle_of_wing) * 500, (255,255,0))
+            self.draw_vector((self.pressure_pos, 0), self.lift, (0,0,255))
+            self.draw_vector((0,0), self.body.velocity)
+            self.draw_vector((self.pressure_pos, 0), self.drag, (255,0,0))
+            self.draw_vector((0,0), Vec2d(1,0).rotated(self.angle_of_wing) * 500, (255,255,0))
         
     def apply_force(self):
         self.angle_of_wing = self.body.angle - 3.1
@@ -133,22 +139,17 @@ class Wing():
         self.lift = -v.perpendicular() * lift
         self.drag = -v * drag
         
+        self.pressure_pos = self.get_pressure_pos(self.angle_of_attack)
+        
         world_pos = self.body.local_to_world((0,0))
         self.body.apply_force_at_world_point(self.lift + self.drag, world_pos)
 
-class Pilot():
+class Pilot(GameBody):
     def __init__(self):
-        self.body = pymunk.Body()
-        self.body.position = Vec2d(0, 40)
-        self.body.velocity = Vec2d(-10, -0.1)
         poly_pts = [(68,25), (14,66), (11,109), (53,93), (76,50)]
-        pts2 = []
-        for pt in poly_pts:
-            pts2.append(((pt[0] * image_scale - pilot_centre.x)/pixel_scale, (pilot_centre.y - pt[1] * image_scale)/pixel_scale))
-        shape = pymunk.Poly(self.body, pts2)
-        shape.mass = 90 # kg
-        shape.friction = 0.7
-        space.add(self.body, shape)
+        GameBody.__init__(self, (0,40), (-8,-0.9), poly_pts, pilot_centre)
+        self.shape.mass = 90 # kg
+        self.shape.friction = 0.7
         
     def draw(self):
         draw_image(pilotImg, pilot_centre, self.body)
@@ -256,7 +257,7 @@ add_wall(space, (-2000, 0), (2000, 0))
 
 wing = Wing()
 pilot = Pilot()
-front_line = pymunk.SlideJoint(wing.body, pilot.body, (-1.3 , 0), (-0.1, 0.2), 0.05, 6.3) # 7m line length
+front_line = pymunk.SlideJoint(wing.body, pilot.body, (-1.3 , 0), (-0.1, 0.2), 0.05, 5.95)
 space.add(front_line)
 rear_line = pymunk.SlideJoint(wing.body, pilot.body, (1.4, 0), (-0.1, 0.2), 0.05, 6.3)
 space.add(rear_line)
@@ -282,11 +283,11 @@ while True:
                 thrust = not thrust
             if event.key == pygame.K_d:
                 if rear_line != None:
-                    rear_line.max = 6.3
+                    rear_line.max = 6.0
         elif event.type == pygame.KEYUP:
             if event.key == pygame.K_d:
                 if rear_line != None:
-                    rear_line.max = 6.6
+                    rear_line.max = 6.3
     if once:
         continue
         
