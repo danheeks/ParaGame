@@ -37,6 +37,10 @@ force_draw_factor = 0.003
 background_spacing = 10 # metres
 camera = None
 text_y = 0
+winch_length = 10.0 # used if machine type is winch
+
+machine_type = 'winch'
+#machine_type = 'normal'
 
 class Graph:
     def __init__(self, pts):
@@ -56,23 +60,27 @@ class Graph:
         return y
     
 class GameBody():
-    def __init__(self, pos, v, poly_pts, image_centre):
+    def __init__(self, pos, v, mass, poly_pts):
         self.body = pymunk.Body()
         self.body.position = pos
         self.body.velocity = v
-        self.pts2 = []
-        for pt in poly_pts:
-            self.pts2.append(((pt[0] * image_scale - image_centre.x)/pixel_scale, (image_centre.y - pt[1] * image_scale)/pixel_scale))
-        self.shape = pymunk.Poly(self.body, self.pts2)
+        self.shape = pymunk.Poly(self.body, poly_pts)
+        self.shape.mass = mass
+        self.shape.friction = 0.7
         space.add(self.body, self.shape)
+
+    def draw_vector(self, pos, v, colour = (0,0,0)):
+        wpos = self.body.local_to_world(Vec2d(pos[0], pos[1]))
+        pygame.draw.line(screen, colour, world_to_screen(wpos), world_to_screen(wpos + v * force_draw_factor))
+
+    def apply_parasitic_drag(self, coefficient):
+        pass
 
 class Wing(GameBody):
     def __init__(self):
-        poly_pts = [(133, 224), (90, 217), (40, 158), (10, 12), (31, 3), (178, 40), (157, 143)]
-        GameBody.__init__(self, (0,46),(-8,-0.8), poly_pts, wing_centre)
+        poly_pts = [(0.635, -2.667),(-0.048, -2.556),(-0.841, -1.619),(-1.317, 0.698),(-0.984, 0.841),(1.349, 0.254),(1.016, -1.381)]
+        GameBody.__init__(self, (0,46),(-8,-0.8), 4, poly_pts)
         self.body.angle = 0.3
-        self.shape.mass = 4 # kg
-        self.shape.friction = 0.7
         self.airflow = Vec2d(0,0)
         self.wing_angle = Vec2d(0,0)
         self.lift = Vec2d(0,0)
@@ -83,6 +91,8 @@ class Wing(GameBody):
         self.pressure_posns = Graph([(-10, 0), (0, 0.0)])
         self.angle_of_attack = None       
         self.angle_of_wing = None 
+        self.brake = False
+        self.let_up = False
         
     def get_lift_coefficient(self, angle):
         return self.lift_coefficients.get_y_at_x(angle)
@@ -93,10 +103,6 @@ class Wing(GameBody):
     def get_pressure_pos(self, angle):
         return self.pressure_posns.get_y_at_x(angle)
         
-    def draw_vector(self, pos, v, colour = (0,0,0)):
-        wpos = self.body.local_to_world(Vec2d(pos[0], pos[1]))
-        pygame.draw.line(screen, colour, world_to_screen(wpos), world_to_screen(wpos + v * force_draw_factor))
-
     def draw_shape(self):
         s = None
         prev = None
@@ -120,9 +126,10 @@ class Wing(GameBody):
         if draw_forces:
             # draw lift and drag
             self.draw_vector((self.pressure_pos, 0), self.lift, (0,0,255))
-            self.draw_vector((0,0), self.body.velocity)
             self.draw_vector((self.pressure_pos, 0), self.drag, (255,0,0))
             self.draw_vector((0,0), Vec2d(1,0).rotated(self.angle_of_wing) * 500, (255,255,0))
+            self.draw_vector((0,0), self.body.velocity * 300)
+            self.draw_vector((0,0), self.body.velocity * (-300))
         
     def apply_force(self):
         self.angle_of_wing = self.body.angle - 3.1
@@ -131,11 +138,35 @@ class Wing(GameBody):
         angle_of_airflow = math.atan2(v.y, v.x)
         self.angle_of_attack = (angle_of_airflow - self.angle_of_wing) * 57
         if self.angle_of_attack > 180: self.angle_of_attack -= 360
-        if self.angle_of_attack < -180: self.angle_of_attack += 360
+        elif self.angle_of_attack < -180: self.angle_of_attack += 360
         
         # assuming lift is about 1000Nm ( 100kg ) at 10 m/s
         lift = 16.0 * v_magn * v_magn * self.get_lift_coefficient(self.angle_of_attack)
         drag = 16.0 * v_magn * v_magn * self.get_drag_coefficient(self.angle_of_attack)
+        if lift < -2000:
+            lift = -2000
+        if lift > 2000:
+            lift = 2000
+        if drag > 2000:
+            drag = 2000
+            
+        if self.brake:
+            # increased lift and drag
+            lift *= 1.5
+            drag *= 1.6
+            if rear_line != None:
+                rear_line.max = 6.1
+        elif self.let_up:
+            # decreased lift and drag
+            lift *= 0.6
+            drag *= 0.8
+            if rear_line != None:
+                rear_line.max = 6.4
+        else:
+            if rear_line != None:
+                rear_line.max = 6.2
+            
+            
         self.lift = -v.perpendicular() * lift
         self.drag = -v * drag
         
@@ -143,13 +174,11 @@ class Wing(GameBody):
         
         world_pos = self.body.local_to_world((0,0))
         self.body.apply_force_at_world_point(self.lift + self.drag, world_pos)
-
-class Pilot(GameBody):
+        
+class Centre(GameBody):
     def __init__(self):
-        poly_pts = [(68,25), (14,66), (11,109), (53,93), (76,50)]
-        GameBody.__init__(self, (0,40), (-8,-0.9), poly_pts, pilot_centre)
-        self.shape.mass = 90 # kg
-        self.shape.friction = 0.7
+        poly_pts = [(-0.3, -0.1), (-0.3, 0.1), (0.3, 0.1), (0.3, -0.1)]
+        GameBody.__init__(self, (0,40), (-8,-0.9), 10, poly_pts)
         
     def draw(self):
         draw_image(pilotImg, pilot_centre, self.body)
@@ -159,6 +188,57 @@ class Pilot(GameBody):
             # 20 kg to the left
             world_pos = self.body.local_to_world((0,0))
             self.body.apply_force_at_world_point(Vec2d(-20 * 9.8, 0), world_pos)
+        self.apply_parasitic_drag(0.1)
+
+class Pilot(GameBody):
+    def __init__(self, starting_height):
+        poly_pts = [(0.302, 0.619),(-0.556, -0.0317),(-0.603, -0.714),(0.063, -0.460),(0.429, 0.222)]
+        GameBody.__init__(self, (0,starting_height), (-8,-0.9), 90, poly_pts)
+        self.winch_up = False
+        self.v_to_centre = None
+        self.dline = 0.0
+        
+    def draw(self):
+        draw_image(pilotImg, pilot_centre, self.body)
+        if self.v_to_centre != None:
+            self.draw_vector((-0.1, 0.2), self.v_to_centre * 100, (150,0,0))
+        
+    def apply_force(self):
+        if thrust:
+            # 20 kg to the left
+            world_pos = self.body.local_to_world((0,0))
+            self.body.apply_force_at_world_point(Vec2d(-20 * 9.8, 0), world_pos)
+
+        # winch
+        if drop_line != None:
+            if self.winch_up:
+                self.dline -= 0.001
+                if self.dline < -0.2:
+                    self.dline = -0.2
+            else:
+                self.dline += 0.001
+                if self.dline > 0.2:
+                    self.dline = 0.2
+            drop_line.max += self.dline
+            if drop_line.max < 0.5:
+                drop_line.max = 0.5
+                self.dline = 0
+            if drop_line.max > winch_length:
+                drop_line.max = winch_length
+                self.dline = 0
+
+            if rear_line != None:
+                rear_line.max = 6.4 + self.dline * 2
+
+
+#            self.v_to_centre = get_rope_vector(drop_line)
+#            v, v_magn = self.v_to_centre.normalized_and_length()
+#            world_pos = self.body.local_to_world((0,0))
+#            self.body.apply_force_at_world_point(v  *force, world_pos)
+#            world_pos = centre.body.local_to_world((0,0))
+#            centre.body.apply_force_at_world_point(-v  *force, world_pos)
+        
+        self.apply_parasitic_drag(0.1)
             
     
 def draw_line(s,e,col=(0,0,0)):
@@ -206,9 +286,10 @@ def draw_background():
 
     if wing.angle_of_attack != None: draw_text('Angle of attack = ' + '%.1f' % wing.angle_of_attack + ' degrees')
     draw_text('Height = ' + '%.1f' %(pilot.body.position.y) + 'm')
-    draw_text('Thrust = ' + 'ON' if thrust else 'off')
+    draw_text('Thrust = ' + ('ON' if thrust else 'off'))
     draw_text('Airspeed = ' + '%.1f' % abs(wing.body.velocity) + 'm/s')
     draw_text('Distance = ' + '%.1f' % math.fabs(pilot.body.position.x) + 'm')
+    draw_text('Winch = ' + ('ON' if pilot.winch_up else 'off'))
     
         
 
@@ -247,6 +328,16 @@ def draw_image(img, centre, body):
     rot_pos = rect_center_to_img_center + v_centre
     screen.blit(rot_img, world_to_screen(body.position) + Vec2d(-rot_pos.x, rot_pos.y - rot_rect.h))
     
+def get_rope_vector(rope):
+    return rope.a.local_to_world(rope.anchor_a) - rope.b.local_to_world(rope.anchor_b)
+
+def draw_rope(rope):
+    # draw a slide joint
+    if rope == None:
+        return
+    
+    draw_line(rope.a.local_to_world(rope.anchor_a), rope.b.local_to_world(rope.anchor_b), (128, 128, 160))
+    
 def update_camera_pos():
     global camera
     camera = pilot.body.position + (0,5)
@@ -256,13 +347,22 @@ add_wall(space, (-2000, 0), (2000, 0))
 
 
 wing = Wing()
-pilot = Pilot()
-front_line = pymunk.SlideJoint(wing.body, pilot.body, (-1.3 , 0), (-0.1, 0.2), 0.05, 5.95)
+drop_line = None
+if machine_type == 'normal':
+    pilot = Pilot(40)
+    line_attacher = pilot
+else:
+    pilot = Pilot(40-winch_length)
+    centre = Centre()
+    line_attacher = centre
+    drop_line = pymunk.SlideJoint(centre.body, pilot.body, (0, 0), (-0.1, 0.2), 0.05, winch_length)
+    space.add(drop_line)
+        
+front_line = pymunk.SlideJoint(wing.body, line_attacher.body, (-1.3 , 0), (0.0, 0.2), 0.05, 6.3)
 space.add(front_line)
-rear_line = pymunk.SlideJoint(wing.body, pilot.body, (1.4, 0), (-0.1, 0.2), 0.05, 6.3)
+rear_line = pymunk.SlideJoint(wing.body, line_attacher.body, (1.4, 0), (0.0, 0.2), 0.05, 6.2)
 space.add(rear_line)
 
-once = False
 
 while True:
     for event in pygame.event.get():
@@ -282,15 +382,18 @@ while True:
             if event.key == pygame.K_c:
                 thrust = not thrust
             if event.key == pygame.K_d:
-                if rear_line != None:
-                    rear_line.max = 6.0
+                wing.brake = True
+            if event.key == pygame.K_e:
+                pilot.winch_up = True
+            if event.key == pygame.K_f:
+                wing.let_up = True
         elif event.type == pygame.KEYUP:
             if event.key == pygame.K_d:
-                if rear_line != None:
-                    rear_line.max = 6.3
-    if once:
-        continue
-        
+                wing.brake = False
+            if event.key == pygame.K_e:
+                pilot.winch_up = False
+            if event.key == pygame.K_f:
+                wing.let_up = False
 
     screen.fill(pygame.Color(10,101,178))
 
@@ -306,14 +409,12 @@ while True:
     draw_background()
     pilot.draw()
     wing.draw()
-    if front_line != None:
-        draw_line(wing.body.local_to_world(front_line.anchor_a), pilot.body.local_to_world(front_line.anchor_b), (128, 128, 160))
-    if rear_line != None:
-        draw_line(wing.body.local_to_world(rear_line.anchor_a), pilot.body.local_to_world(rear_line.anchor_b), (128, 128, 160))
+    draw_rope(front_line)
+    draw_rope(rear_line)
+    draw_rope(drop_line)
     
     pygame.display.flip()
 
     clock.tick(60)
     pygame.display.set_caption(f"fps: {clock.get_fps()}")
     
-    #once = True
