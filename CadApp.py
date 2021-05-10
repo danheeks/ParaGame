@@ -5,10 +5,13 @@ pycad_dir = os.path.realpath(cad_dir + '/../PyCAD')
 sys.path.append(pycad_dir)
 import wx
 import cad
+import geom
 
 from SolidApp import SolidApp # from CAD
 from Ribbon import RB
 from Ribbon import Ribbon
+
+from points import Points
 
 class CadApp(SolidApp):
     def __init__(self):
@@ -26,4 +29,6 @@ class CadApp(SolidApp):
         self.RegisterImportFileTypes(['points'], 'Points Files', ImportPointsFile)
 
 def ImportPointsFile():
-    wx.MessageBox('points')
+    points = Points()
+    points.points = eval( open(cad.GetFilePathForImportExport(), "r").read() )
+    cad.AddUndoably(points)
