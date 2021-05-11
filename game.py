@@ -42,256 +42,8 @@ winch_length = 10.0 # used if winch
 winch = False
 winch_does_up_down = True
 lines_use_slide_joints = False
-keep_wing_above_pilot = -0.1 # none for inactive # else x position to try for
 line_wave_time = 0
 fast_forward = 1
-
-# using slide joints
-
-# 240, -0.06, 0.5,  line_wave = 1.8 = 1030m :)
-# 240, -0.05, 0.5,  line_wave = 1.8 = 1056m :)
-# 240, -0.04, 0.5,  line_wave = 1.8 = over 2000m :)
-# 240, -0.03, 0.5,  line_wave = 1.8 = over 1900m :)
-# 240, -0.02, 0.5,  line_wave = 1.8    about 11m high after 1km
-# 240, 0.0, 0.5,  line_wave = 1.8   landed after 709m
-# 240, 0.04, 0.5,  line_wave = 1.8   landed after 387m
-
-
-# 280, -0.04, 0.5,  line_wave = 1.6  landed at 251m
-# 260, -0.04, 0.5,  line_wave = 1.6  landed at 617m
-# 240, -0.04, 0.5,  line_wave = 1.6  8.3m high after 1km
-# 220, -0.04, 0.5,  line_wave = 1.6  3.7m high after 1km
-# 200, -0.04, 0.5,  line_wave = 1.6  landed at 939m
-# 180, -0.04, 0.5,  line_wave = 1.6  landed at 600m ish
-
-
-# 240, -0.04, 0.4,  line_wave = 1.6  6.1m high after 1km
-# 240, -0.04, 0.45,  line_wave = 1.6 10.3m high after 1km
-# 240, -0.04, 0.5,  line_wave = 1.6  8.3m high after 1km
-# 240, -0.04, 0.55,  line_wave = 1.6 4.6m high after 1km
-
-
-# 240, -0.04, 0.5,  line_wave = 1.6 brake_angle = 0.05    landed after 830m
-# 240, -0.04, 0.5,  line_wave = 1.6 brake_angle = 0.00 
-# 240, -0.04, 0.5,  line_wave = 1.6 brake_angle = -0.05   landed after 315m
-
-
-# 240, -0.04, 0.7,  line_wave = 1.6  square angle wave    12.2m after 1km ( but another time landed after 661m )
-# 240, -0.04, 0.5,  line_wave = 1.6  square angle wave     0.2m after 1km
-# 240, -0.04, 0.6,  line_wave = 1.6  square angle wave     landed at 948m
-# 240, -0.04, 0.7,  line_wave = 1.6  sin angle wave        1.4m after 1km
-# 240, -0.05, 0.5,  line_wave = 1.6  square angle wave     landed at 565m
-# 240, -0.06, 0.5,  line_wave = 1.6  square angle wave     landed at 267m
-# 240, -0.03, 0.5,  line_wave = 1.6  square angle wave     12m at 1km
-
-
-# 240, -0.03, 0.5,  line_wave = 2.0  brake_angle 0.01 square angle wave  parachutal stall after about 100m
-# 240, -0.03, 0.5,  line_wave = 2.0  brake_angle -0.01 square angle wave   landed at 849m
-# 240, -0.03, 0.5,  line_wave = 2.0  brake_angle -0.02 square angle wave   landed at 460m
-
-# 240, -0.03, 0.5,  line_wave = 1.7  brake_angle 0.0 square angle wave  13.5m at 1km
-# 240, -0.035, 0.5,  line_wave = 1.7  brake_angle 0.0 square angle wave  3.5m at 1km
-
-
-# 240, -0.04, 0.5,  line_wave = 1.6 sin wave   943m
-# 240, -0.04, 0.3,  line_wave = 1.6 sin wave   2m at 1km
-# 240, -0.04, 0.15,  line_wave = 1.6 sin wave   3m at 1km
-# 240, -0.04, 0.05,  line_wave = 1.6 sin wave  459m
-
-
-# 230, -0.03, 0.05,  line_wave = 1.8 sin wave*6  9.6m at 1km
-
-
-
-
-# using pin joints
-#240, -0.01, 1.0, 0.5, line_wave = 0.0  219.4m
-
-#240, -0.01, 1.0, 0.5, line_wave = 1.0  225.1m
-#240, -0.01, 1.0, 0.5, line_wave = 1.3  228.6m
-#240, -0.01, 1.0, 0.5, line_wave = 1.5  245.3m
-#240, -0.01, 1.0, 0.5, line_wave = 1.6  246.4m
-#240, -0.01, 1.0, 0.5, line_wave = 1.7  247.7m
-#240, -0.01, 1.0, 0.5, line_wave = 1.8  249.9m
-#240, -0.01, 1.0, 0.5, line_wave = 1.9  252.4m
-#240, -0.01, 1.0, 0.5, line_wave = 2.0  253.4m
-#240, -0.01, 1.0, 0.5, line_wave = 2.2  256.5m
-#240, -0.01, 1.0, 0.5, line_wave = 2.4  264.6m
-#240, -0.01, 1.0, 0.5, line_wave = 2.6  277.8m
-#240, -0.01, 1.0, 0.5, line_wave = 2.8  280.7m
-#240, -0.01, 1.0, 0.5, line_wave = 3.0  289.4m
-#240, -0.01, 1.0, 0.5, line_wave = 3.1  279.6m
-
-#240, -0.01, 1.0, 0.5, line_wave = 2.9  285.3m
-#240, -0.015, 1.0, 0.5, line_wave = 2.9 320.5m
-#240, -0.02, 1.0, 0.5, line_wave = 2.9 344.8m
-#240, -0.025, 1.0, 0.5, line_wave = 2.9 392.2m
-#240, -0.03, 1.0, 0.5, line_wave = 2.9 418.1m
-#240, -0.035, 1.0, 0.5, line_wave = 2.9 481.2m
-#240, -0.04, 1.0, 0.5, line_wave = 2.9 537m
-#240, -0.045, 1.0, 0.5, line_wave = 2.9 529m
-#240, -0.05, 1.0, 0.5, line_wave = 2.9 341.9m
-
-#240, -0.04, 1.0, 0.63, line_wave = 2.9 492m
-#240, -0.04, 1.0, 0.62, line_wave = 2.9 501m
-#240, -0.04, 1.0, 0.61, line_wave = 2.9 498m
-#240, -0.04, 1.0, 0.6, line_wave = 2.9 497m
-#240, -0.04, 1.0, 0.59, line_wave = 2.9 548m
-#240, -0.04, 1.0, 0.58, line_wave = 2.9 550m
-#240, -0.04, 1.0, 0.57, line_wave = 2.9 551m
-#240, -0.04, 1.0, 0.56, line_wave = 2.9 550m
-#240, -0.04, 1.0, 0.55, line_wave = 2.9 550m
-#240, -0.04, 1.0, 0.54, line_wave = 2.9 548m
-#240, -0.04, 1.0, 0.53, line_wave = 2.9 547m
-#240, -0.04, 1.0, 0.52, line_wave = 2.9 545m
-#240, -0.04, 1.0, 0.51, line_wave = 2.9 534m
-#240, -0.04, 1.0, 0.5, line_wave = 2.9 537m
-#240, -0.04, 1.0, 0.48, line_wave = 2.9 504m
-#240, -0.04, 1.0, 0.47, line_wave = 2.9 492m
-
-
-#240, -0.04, 1.0, 0.57, line_wave = 2.9 551m
-#241, -0.04, 1.0, 0.57, line_wave = 2.9 565m
-#242, -0.04, 1.0, 0.57, line_wave = 2.9 558m
-#243, -0.04, 1.0, 0.57, line_wave = 2.9 572m
-#244, -0.04, 1.0, 0.57, line_wave = 2.9 576m
-#245, -0.04, 1.0, 0.57, line_wave = 2.9 585m
-#246, -0.04, 1.0, 0.57, line_wave = 2.9 593m
-#247, -0.04, 1.0, 0.57, line_wave = 2.9 604m
-#248, -0.04, 1.0, 0.57, line_wave = 2.9 611m
-#249, -0.04, 1.0, 0.57, line_wave = 2.9 616m
-#250, -0.04, 1.0, 0.57, line_wave = 2.9 621m
-#251, -0.04, 1.0, 0.57, line_wave = 2.9 632m
-#252, -0.04, 1.0, 0.57, line_wave = 2.9 582m
-#253 580m
-#254 568m
-#255 559m
-
-#251, -0.04, 1.0, 0.57, line_wave = 2.9 632m
-#251, -0.04, 1.0, 0.55, line_wave = 2.9 633m
-#251, -0.04, 1.0, 0.53, line_wave = 2.9 631m
-#251, -0.04, 1.0, 0.51, line_wave = 2.9 624m
-
-#251, -0.04, 1.0, 0.51, line_wave = 2.9, winch = True ( movement all done in lines though )
-#winch_length 0.15
-#winch_length 0.2  1251m
-#winch_length 0.4  1100m
-#winch_length 0.6  1025m
-#winch_length 0.8  967m
-#winch_length 1    900m
-#winch_length 1.2  842m
-#winch_length 1.4  807m
-
-
-#251, -0.04, 1.0, 0.51, line_wave = 2.9
-#start_v = (-6,-0.8) 483m
-#start_v = (-7,-0.8) 548m
-#start_v = (-7.2,-0.8) 615m
-#start_v = (-7.3,-0.8) 618m
-#start_v = (-7.4,-0.8) 619m
-#start_v = (-7.5,-0.8) 619m
-#start_v = (-7.6,-0.8) 619m
-#start_v = (-7.7,-0.8) 619m
-#start_v = (-7.8,-0.8) 620m
-#start_v = (-7.9,-0.8) 619m
-#start_v = (-8,-0.8) 620m
-#start_v = (-8.2,-0.8) 597m
-#start_v = (-8.5,-0.8) 579m
-#start_v = (-9,-0.8) 525m
-#start_v = (-10,-0.8) 399m
-
-
-#wing_angle = 0.0 568m
-#wing_angle = 0.2 111m
-#wing_angle = 0.1 298m
-#wing_angle = 0.05 499
-#0.01 555
-#-0.01 548
-#-0.02 530
-#-0.002 566
-#-0.001 567
-#0.001 567
-#0.002 567
-#0.003 567
-
-# with extra_length = 0.5 lines
-#251 368m
-#285 411
-#290 437m
-#295 444m
-#298 452
-#299 457m
-#300 453m
-#301 443m
-#305 409m
-#310 393m
-#330 79m
-
-#line_wave
-#3.0 74
-#2.8 474
-#2.6 457
-#2.5 394
-
-#2.8, angle_fraction
-#-0.044 75
-#-0.04 474
-#-0.036 473
-#-0.033 453
-
-# line_wave 3.8, cycle_length 299, angle_fraction = -0.02, angle_offset = 0.51, extra_length = 1.0
-# extra_rear
-# 0.0 78m
-# 0.08 430
-# 0.09 432m
-# 0.1 427m
-# 0.11 422
-# 0.12 414m
-# 0.15 411m
-
-# extra_length = 2.0, extra_rear 0.2
-# cycle_length
-# 305 284m
-# 310 287m
-# 320 298m
-# 330 281m
-# 340 272m
-# 350 272m
-# 358 273m
-# 360 274m
-# 363 274m
-# 370 107m
-
-# line_wave 2.9, cyclen 251, angfrac -0.04, angoff 0.51, extlen 0, extrear 0
-# tri_wave move, square angle
-# 251 501m
-# 245 420m
-# 257 530m
-# 264 588m
-# 277 588m
-# 284 592m
-# 290 632m
-# 295 365m
-# 300 73m
-
-# 10m winch
-# cycle length
-# 400 394m
-# 410 401m
-# 420 400m
-# 430
-
-# cycle lengr 100 line wave 2.0
-# ang eff = -0.2
-# ang offset
-# -0.3
-# -0.2 109m
-# -0.15 44m
-# -0.1 90m
-# 0.0 95m
-# 0.1 84m
-# 0.2 33m
-# 0.3 33m
 
 line_wave = 2.8
 line_wave_cycle_length = 251
@@ -619,6 +371,7 @@ def draw_background():
     draw_text('Winch = ' + ('ON' if pilot.winch_up else 'off'))
     draw_text('Line Wave = ' + '%.1f' % line_wave)
     draw_text('Normal Speed' if (fast_forward == 1) else ('>> x' + str(fast_forward)))
+    draw_text('Frame: ' + str(int(line_wave_time)) + ' of ' + str(line_wave_cycle_length))
         
        
 
@@ -716,6 +469,7 @@ else:
 #space.add(damped_spring_rear)
 
 
+game_step = 0.0
 
 while True:
     for event in pygame.event.get():
@@ -757,6 +511,13 @@ while True:
                     fast_forward = 100
                 else:
                     fast_forward = 1
+            if event.key == pygame.K_l:
+                if fast_forward == 1:
+                    fast_forward = 0.25
+                elif fast_forward == 0.25:
+                    fast_forward = 0.1
+                else:
+                    fast_forward = 1
         elif event.type == pygame.KEYUP:
             if event.key == pygame.K_d:
                 wing.brake = False
@@ -768,7 +529,16 @@ while True:
     screen.fill(pygame.Color(10,101,178))
 
     if running:
-        for i in range(0, fast_forward):
+        step = fast_forward
+        if fast_forward < 1.0:
+            game_step += fast_forward
+            if game_step < 1.0:
+                step = 0
+            else:
+                step = 1
+                game_step = 0.0
+                
+        for i in range(0, step):
             wing.apply_force()
             pilot.apply_force()
             space.step(1.0 / 60)
