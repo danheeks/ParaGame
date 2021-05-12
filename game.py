@@ -37,24 +37,32 @@ force_draw_factor = 0.003
 background_spacing = 10 # metres
 camera = None
 text_y = 0
-start_height = 0.3
 winch_length = 10.0 # used if winch
 winch = False
 winch_does_up_down = True
-lines_use_slide_joints = False
-line_wave_time = 0
+start_frame = 106
+line_wave_time = start_frame
 fast_forward = 1
 
-line_wave = 2.8
-line_wave_cycle_length = 251
-brake_angle = 0.2
-start_v = (-10.5,0.0)
-extra_length = 0.0
-extra_rear = 0.0
+sim_mode = 'gliding'
+sim_mode = 'flapping'
 
+if sim_mode == 'gliding':
+    start_height = 20
+    line_wave = False
+    brake_angle = 0.2
+    start_v = (-7,0.0)
+    lines_use_slide_joints = True
+    pilot_runs = False
+else: # flapping
+    start_height = 0.3
+    line_wave = True
+    line_wave_cycle_length = 251
+    brake_angle = 0.2
+    start_v = (-11,0.0)
+    lines_use_slide_joints = False
+    pilot_runs = True
 
-default_front_length = 6.3 + extra_length
-default_rear_length = 6.2 + extra_length + extra_rear
 
 class Graph:
     def __init__(self, pts):
@@ -131,10 +139,16 @@ class Wing(GameBody):
         return self.lift_coefficients.get_y_at_x(angle)
         
     def get_drag_coefficient(self, angle):
-        return self.drag_coefficients.get_y_at_x(angle)
+        return self.drag_coefficients.get_y_at_x(angle) * 1.1
         
     def get_pressure_pos(self, angle):
         return self.pressure_posns.get_y_at_x(angle)
+        
+    def get_front_length(self, frame):
+        return self.line_wave_lengths[frame][0]   
+        
+    def get_rear_length(self, frame):
+        return self.line_wave_lengths[frame][1]   
         
     def draw(self):
         draw_image(wingImg, wing_centre, self.body)
@@ -187,7 +201,7 @@ class Wing(GameBody):
             world_pos = self.body.local_to_world((0,0))
             self.body.apply_force_at_world_point(Vec2d(-20 * 9.8, 0), world_pos)
             
-        if line_wave > 0.0:
+        if line_wave:
             # up and down
             global line_wave_time
             global line_wave_cycle_length
@@ -243,7 +257,8 @@ class Pilot(GameBody):
         self.winch_up = False
         self.v_to_centre = None
         self.dline = 0.0
-        self.shape.friction = 0.0
+        if pilot_runs:      
+            self.shape.friction = 0.0
         
     def draw(self):
         #self.draw_shape()
@@ -321,7 +336,7 @@ def draw_background():
     if draw_ground:
         draw_rect(Vec2d(minx, miny), Vec2d(maxx, 0), (35,100,40))    
         
-    if line_wave != 0.0:
+    if line_wave:
         if front_line != None:
             if lines_use_slide_joints:
                 line_h = front_line.max * 30
@@ -335,6 +350,8 @@ def draw_background():
                 line_h = rear_line.distance * 30
             pygame.draw.rect(screen, (255,0,0), pygame.Rect(0.8 * w + 20, h - 100 - line_h, 10, line_h))
 
+    draw_text(sim_mode) # gliding for example
+
     if wing.angle_of_attack != None:
         draw_text('Angle of attack = ' + ('%.1f' % wing.angle_of_attack) + ' degrees')
     
@@ -342,7 +359,7 @@ def draw_background():
     draw_text('Airspeed = ' + '%.1f' % abs(wing.body.velocity) + 'm/s')
     draw_text('Distance = ' + '%.1f' % math.fabs(pilot.body.position.x) + 'm')
     draw_text('Normal Speed' if (fast_forward == 1) else ('>> x' + str(fast_forward)))
-    draw_text('Frame: ' + str(int(line_wave_time)) + ' of ' + str(line_wave_cycle_length))
+    #draw_text('Frame: ' + str(int(line_wave_time)) + ' of ' + str(line_wave_cycle_length))
 
 def add_wall(space, start, end):
     seg = pymunk.Segment(space.static_body, start, end, 0.05)
@@ -419,19 +436,21 @@ else:
 #damper_front = Damper(wing, (-1.3, 0))
 #damper_rear = Damper(wing, (1.4, 0))
 
+front_length, rear_length = wing.line_wave_lengths[start_frame]
+
 if lines_use_slide_joints:
-    front_line = pymunk.SlideJoint(wing.body, line_attacher.body, (-1.3, 0), attacher_point, 0.05, default_front_length)
+    front_line = pymunk.SlideJoint(wing.body, line_attacher.body, (-1.3, 0), attacher_point, 0.05, front_length)
 #    front_line.max_force = 3000
     space.add(front_line)
-    rear_line = pymunk.SlideJoint(wing.body, line_attacher.body, (1.4, 0), attacher_point, 0.05, default_rear_length)
+    rear_line = pymunk.SlideJoint(wing.body, line_attacher.body, (1.4, 0), attacher_point, 0.05, rear_length)
 #    rear_line.max_force = 3000
     space.add(rear_line)
 else:
     front_line = pymunk.PinJoint(wing.body, line_attacher.body, (-1.3, 0), attacher_point)
-    front_line.distance = default_front_length
+    front_line.distance = front_length
     space.add(front_line)
     rear_line = pymunk.PinJoint(wing.body, line_attacher.body, (1.4, 0), attacher_point)
-    rear_line.distance = default_rear_length
+    rear_line.distance = rear_length
     space.add(rear_line)
     
 #damped_spring_front = pymunk.DampedSpring(wing.body, line_attacher.body, (-1.3, 0), (0.0, 0.2), default_front_length, 5000, 0.3)
@@ -468,13 +487,8 @@ while True:
             if event.key == pygame.K_g:
                 thrust_on_wing = not thrust_on_wing
             if event.key == pygame.K_h:
-                if line_wave == 0.0:
-                    line_wave_time = 0.0
-                line_wave += 0.1
-            if event.key == pygame.K_i:
-                line_wave -= 0.1
-                if line_wave < 0.0:
-                    line_wave = 0.0
+                line_wave = not line_wave
+                line_wave_time = start_frame
             if event.key == pygame.K_k:
                 if fast_forward == 1:
                     fast_forward = 10
