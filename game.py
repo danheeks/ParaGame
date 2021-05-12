@@ -32,12 +32,12 @@ wing_centre = Vec2d(93,56) * image_scale
 
 w = screen.get_width()
 h = screen.get_height()
-draw_forces = True
+draw_forces = False
 force_draw_factor = 0.003
 background_spacing = 10 # metres
 camera = None
 text_y = 0
-start_height = 20
+start_height = 0.3
 winch_length = 10.0 # used if winch
 winch = False
 winch_does_up_down = True
@@ -47,11 +47,8 @@ fast_forward = 1
 
 line_wave = 2.8
 line_wave_cycle_length = 251
-line_wave_angle_effect = -0.04
-line_wave_angle_amplitude = 1.0
-line_wave_angle_offset = 0.5
 brake_angle = 0.2
-start_v = (-7.8,-0.8)
+start_v = (-10.5,0.0)
 extra_length = 0.0
 extra_rear = 0.0
 
@@ -91,7 +88,10 @@ class GameBody():
         pygame.draw.line(screen, colour, world_to_screen(wpos), world_to_screen(wpos + v * force_draw_factor))
 
     def apply_parasitic_drag(self, coefficient):
-        pass
+        v, v_magn = self.body.velocity.normalized_and_length()
+        drag = 1.0 * v_magn * v_magn * coefficient
+        world_pos = self.body.local_to_world((0,0))
+        self.body.apply_force_at_world_point(-v * drag, world_pos)
         
     def draw_shape(self):
         s = None
@@ -107,34 +107,6 @@ class GameBody():
                 prev = (x,y)
         if prev != None:
             draw_line(prev, s)
-
-def tri_wave(angle):
-    a = (angle % 6.283185307179586) * 0.31830988618379 # divide by pi
-    if a < 0.5:
-        return a * 2.0
-    if a < 1.5:
-        return 2.0 - a * 2.0 
-    return a * 2.0 - 4.0
-
-def flat_top_wave(angle):
-    a = (angle % 6.283185307179586) * 0.31830988618379 # divide by pi
-    if a < 0.4:
-        return a * 2.5
-    if a < 0.6:
-        return 1.0
-    if a < 1.4:
-        return 2.5 - a * 2.5
-    if a < 1.6:
-        return -1.0
-    return a * 2.5 - 5.0
-
-def square_wave(angle):
-    if math.sin(angle) > 0.0: return 1.0
-    return -1.0
-
-def one_input(angle):
-    if math.sin(angle) < -0.9: return -1.0
-    return 1.0
 
 class Wing(GameBody):
     def __init__(self, alt):
@@ -167,7 +139,7 @@ class Wing(GameBody):
     def draw(self):
         draw_image(wingImg, wing_centre, self.body)
         
-        self.draw_shape()
+        #self.draw_shape()
         
         if draw_forces:
             # draw lift and drag
@@ -193,12 +165,14 @@ class Wing(GameBody):
         # assuming lift is about 1000Nm ( 100kg ) at 10 m/s
         lift = 16.0 * v_magn * v_magn * self.get_lift_coefficient(self.angle_of_attack)
         drag = 16.0 * v_magn * v_magn * self.get_drag_coefficient(self.angle_of_attack)
-#        if lift < -2000:
-#            lift = -2000
-#        if lift > 2000:
-#            lift = 2000
-#        if drag > 2000:
-#            drag = 2000
+        
+        if lines_use_slide_joints:
+            if lift < -4000:
+                lift = -4000
+            if lift > 4000:
+                lift = 4000
+            if drag > 4000:
+                drag = 4000
             
         self.lift = -v.perpendicular() * lift
         self.drag = -v * drag
@@ -269,9 +243,10 @@ class Pilot(GameBody):
         self.winch_up = False
         self.v_to_centre = None
         self.dline = 0.0
+        self.shape.friction = 0.0
         
     def draw(self):
-        self.draw_shape()
+        #self.draw_shape()
         draw_image(pilotImg, pilot_centre, self.body)
         if self.v_to_centre != None:
             self.draw_vector((-0.1, 0.2), self.v_to_centre * 100, (150,0,0))
@@ -300,7 +275,7 @@ class Pilot(GameBody):
 #                drop_line.max = winch_length
 #                self.dline = 0
         
-        self.apply_parasitic_drag(0.1)
+        #self.apply_parasitic_drag(0.1)
             
     
 def draw_line(s,e,col=(0,0,0)):
@@ -364,16 +339,10 @@ def draw_background():
         draw_text('Angle of attack = ' + ('%.1f' % wing.angle_of_attack) + ' degrees')
     
     draw_text('Height = ' + '%.1f' %(pilot.body.position.y) + 'm')
-    draw_text('Thrust = ' + ('ON' if thrust else 'off'))
-    draw_text('Thrust on Wing = ' + ('ON' if thrust_on_wing else 'off'))
     draw_text('Airspeed = ' + '%.1f' % abs(wing.body.velocity) + 'm/s')
     draw_text('Distance = ' + '%.1f' % math.fabs(pilot.body.position.x) + 'm')
-    draw_text('Winch = ' + ('ON' if pilot.winch_up else 'off'))
-    draw_text('Line Wave = ' + '%.1f' % line_wave)
     draw_text('Normal Speed' if (fast_forward == 1) else ('>> x' + str(fast_forward)))
     draw_text('Frame: ' + str(int(line_wave_time)) + ' of ' + str(line_wave_cycle_length))
-        
-       
 
 def add_wall(space, start, end):
     seg = pymunk.Segment(space.static_body, start, end, 0.05)
@@ -452,8 +421,10 @@ else:
 
 if lines_use_slide_joints:
     front_line = pymunk.SlideJoint(wing.body, line_attacher.body, (-1.3, 0), attacher_point, 0.05, default_front_length)
+#    front_line.max_force = 3000
     space.add(front_line)
     rear_line = pymunk.SlideJoint(wing.body, line_attacher.body, (1.4, 0), attacher_point, 0.05, default_rear_length)
+#    rear_line.max_force = 3000
     space.add(rear_line)
 else:
     front_line = pymunk.PinJoint(wing.body, line_attacher.body, (-1.3, 0), attacher_point)
