@@ -8,6 +8,7 @@ import cad
 import geom
 
 from SolidApp import SolidApp # from CAD
+from InputMode import InputMode
 from Ribbon import RB
 from Ribbon import Ribbon
 from Ribbon import GrayedButton
@@ -16,9 +17,9 @@ from points import Points
 from points import type as points_type
 
 
-class PointEditing(cad.InputMode):
+class PointEditing(InputMode):
     def __init__(self, front):
-        cad.InputMode.__init__(self)
+        InputMode.__init__(self)
         # front is True or False ( for rear )
         self.front = front
         self.points = None
@@ -34,7 +35,7 @@ class PointEditing(cad.InputMode):
             if event.leftDown:
                 v = wx.GetApp().GetViewport()
                 p = cad.Digitize(cad.IPoint(event.x, event.y))
-                self.points.ModifyAtPoint(p, self.front)
+                self.points.ModifyAtPoint(p.point, self.front)
 
                 v.need_update = True
                 v.need_refresh = True
@@ -87,7 +88,7 @@ class CadApp(SolidApp):
             if object.GetType() == points_type:
                 editing.points = object
                 break
-        cad.SetInputMode(editing)
+        self.SetInputMode(editing)
         
     def OnFrontEditButton(self, event):
         self.OnEdit(True)
